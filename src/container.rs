@@ -1,5 +1,7 @@
 use std::os::unix::io::RawFd;
 
+use nix::unistd::close;
+
 use crate::cli::Args;
 use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
@@ -43,6 +45,17 @@ impl Container {
 
     pub fn clean_exit(&mut self) -> Result<(), ErrCode> {
         log::debug!("Cleaning container");
+
+        if let Err(e) = close(self.sockets.0) {
+            log::error!("Unable to close write socket: {:?}", e);
+            return Err(ErrCode::SocketError(3));
+        }
+
+        if let Err(e) = close(self.sockets.1) {
+            log::error!("Unable to close read socket: {:?}", e);
+            return Err(ErrCode::SocketError(3));
+        }
+
         Ok(())
     }
 }
