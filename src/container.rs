@@ -1,7 +1,8 @@
 use std::os::unix::io::RawFd;
 
-use nix::unistd::close;
+use nix::unistd::{close, Pid};
 
+use crate::child::generate_child_process;
 use crate::cli::Args;
 use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
@@ -30,15 +31,18 @@ pub fn check_linux_version() -> Result<(), ErrCode> {
 pub struct Container {
     sockets: (RawFd, RawFd),
     config: ContainerOpts,
+    child_pid: Option<Pid>
 }
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, ErrCode> {
         let (config, sockets) = ContainerOpts::new(&args.command, args.uid, args.mount_dir)?;
-        Ok(Container { sockets, config })
+        Ok(Container { sockets, config, child_pid: None })
     }
 
     pub fn create(&mut self) -> Result<(), ErrCode> {
+        let pid = generate_child_process(self.config.clone())?;
+        self.child_pid = Some(pid);
         log::debug!("Creation finished");
         Ok(())
     }
