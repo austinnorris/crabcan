@@ -3,6 +3,7 @@ mod config;
 mod container;
 mod errors;
 mod ipc;
+mod child;
 
 use errors::exit_with_return_code;
 
