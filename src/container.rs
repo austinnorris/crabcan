@@ -1,5 +1,6 @@
 use std::os::unix::io::RawFd;
 
+use nix::sys::wait::waitpid;
 use nix::unistd::{close, Pid};
 
 use crate::child::generate_child_process;
@@ -31,13 +32,17 @@ pub fn check_linux_version() -> Result<(), ErrCode> {
 pub struct Container {
     sockets: (RawFd, RawFd),
     config: ContainerOpts,
-    child_pid: Option<Pid>
+    child_pid: Option<Pid>,
 }
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, ErrCode> {
         let (config, sockets) = ContainerOpts::new(&args.command, args.uid, args.mount_dir)?;
-        Ok(Container { sockets, config, child_pid: None })
+        Ok(Container {
+            sockets,
+            config,
+            child_pid: None,
+        })
     }
 
     pub fn create(&mut self) -> Result<(), ErrCode> {
@@ -64,6 +69,17 @@ impl Container {
     }
 }
 
+pub fn wait_child(pid: Option<Pid>) -> Result<(), ErrCode> {
+    if let Some(child_pid) = pid {
+        log::debug!("Waiting for child (pid-{}) to finish", child_pid);
+        if let Err(e) = waitpid(child_pid, None) {
+            log::error!("Error while waiting for child to finish: {:?}", e);
+            return Err(ErrCode::ContainerError(1));
+        }
+    }
+    Ok(())
+}
+
 pub fn start(args: Args) -> Result<(), ErrCode> {
     check_linux_version()?;
     let mut container = Container::new(args)?;
@@ -72,6 +88,8 @@ pub fn start(args: Args) -> Result<(), ErrCode> {
         log::error!("Error while creating container: {:?}", e);
         return Err(e);
     }
+    log::debug!("Container child PID: {:?}", container.child_pid);
+    wait_child(container.child_pid)?;
     log::debug!("Finished, cleaning and exiting");
     container.clean_exit()
 }
