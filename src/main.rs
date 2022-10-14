@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod container;
 mod errors;
+mod ipc;
 
 use errors::exit_with_return_code;
 

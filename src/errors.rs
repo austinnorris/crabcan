@@ -5,7 +5,8 @@ use std::process::exit;
 pub enum ErrCode {
     InvalidArgument(&'static str),
     NotSupported(u8),
-    ContainerError(u8)
+    ContainerError(u8),
+    SocketError(u8),
 }
 
 impl ErrCode {

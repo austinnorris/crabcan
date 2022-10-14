@@ -1,3 +1,5 @@
+use std::os::unix::io::RawFd;
+
 use crate::cli::Args;
 use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
@@ -24,13 +26,14 @@ pub fn check_linux_version() -> Result<(), ErrCode> {
 }
 
 pub struct Container {
+    sockets: (RawFd, RawFd),
     config: ContainerOpts,
 }
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, ErrCode> {
-        let config = ContainerOpts::new(&args.command, args.uid, args.mount_dir)?;
-        Ok(Container { config })
+        let (config, sockets) = ContainerOpts::new(&args.command, args.uid, args.mount_dir)?;
+        Ok(Container { sockets, config })
     }
 
     pub fn create(&mut self) -> Result<(), ErrCode> {
@@ -42,7 +45,6 @@ impl Container {
         log::debug!("Cleaning container");
         Ok(())
     }
-    
 }
 
 pub fn start(args: Args) -> Result<(), ErrCode> {
