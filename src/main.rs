@@ -4,6 +4,7 @@ mod container;
 mod errors;
 mod ipc;
 mod child;
+mod hostname;
 
 use errors::exit_with_return_code;
 

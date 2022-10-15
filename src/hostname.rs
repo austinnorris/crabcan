@@ -1,0 +1,39 @@
+use rand::seq::SliceRandom;
+use rand::Rng;
+
+use crate::errors::ErrCode;
+
+const HOSTNAME_ADJ: [&'static str; 12] = [
+    "tiny", "small", "normal", "medium", "large", "huge", "silent", "noisy", "rusty", "spotted",
+    "crooked", "round",
+];
+
+const HOSTNAME_COLORS: [&'static str; 12] = [
+    "red", "blue", "green", "brown", "purple", "yellow", "orange", "gold", "pink", "white",
+    "black", "gray",
+];
+
+const HOSTNAME_OBJECT: [&'static str; 12] = [
+    "piano",
+    "drum",
+    "guitar",
+    "synth",
+    "bass",
+    "oboe",
+    "clarinet",
+    "violin",
+    "saxophone",
+    "trumpet",
+    "cello",
+    "flute",
+];
+
+pub fn generate_hostname() -> Result<String, ErrCode> {
+    let mut rng = rand::thread_rng();
+    Ok(format!(
+        "{}-{}-{}",
+        HOSTNAME_ADJ.choose(&mut rng).ok_or(ErrCode::RngError)?,
+        HOSTNAME_COLORS.choose(&mut rng).ok_or(ErrCode::RngError)?,
+        HOSTNAME_OBJECT.choose(&mut rng).ok_or(ErrCode::RngError)?
+    ))
+}
