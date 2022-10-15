@@ -1,3 +1,4 @@
+use nix::unistd::sethostname;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
@@ -36,4 +37,17 @@ pub fn generate_hostname() -> Result<String, ErrCode> {
         HOSTNAME_COLORS.choose(&mut rng).ok_or(ErrCode::RngError)?,
         HOSTNAME_OBJECT.choose(&mut rng).ok_or(ErrCode::RngError)?
     ))
+}
+
+pub fn set_container_hostname(hostname: &str) -> Result<(), ErrCode> {
+    match sethostname(hostname) {
+        Ok(_) => {
+            log::debug!("Container hostname set to {}", hostname);
+            Ok(())
+        }
+        Err(_) => {
+            log::error!("Cannot set hostname {} for container", hostname);
+            Err(ErrCode::HostnameError(0))
+        }
+    }
 }

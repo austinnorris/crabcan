@@ -1,5 +1,6 @@
 use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
+use crate::hostname::set_container_hostname;
 
 use nix::sched::clone;
 use nix::sched::CloneFlags;
@@ -9,6 +10,14 @@ use nix::unistd::Pid;
 const STACK_SIZE: usize = 1024 * 1024;
 
 fn child(config: ContainerOpts) -> isize {
+    match setup_container_config(&config) {
+        Ok(_) => log::info!("Container configured successfully"),
+        Err(e) => {
+            log::error!("Error while configuring container: {:?}", e);
+            return -1;
+        }
+    }
+
     log::info!(
         "Starting container with command {} and args {:?}",
         config
@@ -43,4 +52,9 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, ErrCode> {
         }
         Err(_) => Err(ErrCode::ChildProcessError(0)),
     }
+}
+
+fn setup_container_config(config: &ContainerOpts) -> Result<(), ErrCode> {
+    set_container_hostname(&config.hostname)?;
+    Ok(())
 }
