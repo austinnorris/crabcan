@@ -37,7 +37,8 @@ pub struct Container {
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, ErrCode> {
-        let (config, sockets) = ContainerOpts::new(&args.command, args.uid, args.mount_dir)?;
+        let (config, sockets) =
+            ContainerOpts::new(&args.command, args.uid, args.mount_dir, args.hostname)?;
         Ok(Container {
             sockets,
             config,
@@ -84,7 +85,7 @@ pub fn start(args: Args) -> Result<(), ErrCode> {
     check_linux_version()?;
     let mut container = Container::new(args)?;
     if let Err(e) = container.create() {
-        container.clean_exit();
+        container.clean_exit().expect("Exit failure");
         log::error!("Error while creating container: {:?}", e);
         return Err(e);
     }

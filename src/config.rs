@@ -21,6 +21,7 @@ impl ContainerOpts {
         command: &str,
         uid: u32,
         mount_dir: PathBuf,
+        hostname: Option<String>,
     ) -> Result<(ContainerOpts, (RawFd, RawFd)), ErrCode> {
         let sockets = generate_socket_pair()?;
         let argv: Vec<CString> = command
@@ -35,7 +36,7 @@ impl ContainerOpts {
                 uid,
                 mount_dir,
                 fd: sockets.1.clone(),
-                hostname: generate_hostname()?,
+                hostname: hostname.unwrap_or(generate_hostname()?),
             },
             sockets,
         ))
