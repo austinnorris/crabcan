@@ -1,6 +1,5 @@
 use nix::unistd::sethostname;
 use rand::seq::SliceRandom;
-use rand::Rng;
 
 use crate::errors::ErrCode;
 
