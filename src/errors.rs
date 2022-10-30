@@ -9,6 +9,7 @@ pub enum ErrCode {
     SocketError(u8),
     ChildProcessError(u8),
     HostnameError(u8),
+    MountError(u8),
     RngError,
 }
 

@@ -5,6 +5,7 @@ mod errors;
 mod ipc;
 mod child;
 mod hostname;
+mod mounts;
 
 use errors::exit_with_return_code;
 

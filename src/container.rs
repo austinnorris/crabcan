@@ -7,6 +7,7 @@ use crate::child::generate_child_process;
 use crate::cli::Args;
 use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
+use crate::mounts::clean_mounts;
 
 pub const MINIMAL_KERNEL_VERSION: f32 = 4.8;
 
@@ -65,6 +66,8 @@ impl Container {
             log::error!("Unable to close read socket: {:?}", e);
             return Err(ErrCode::SocketError(3));
         }
+
+        clean_mounts(&self.config.mount_dir)?;
 
         Ok(())
     }
