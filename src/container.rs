@@ -87,6 +87,7 @@ pub fn wait_child(pid: Option<Pid>) -> Result<(), ErrCode> {
 pub fn start(args: Args) -> Result<(), ErrCode> {
     check_linux_version()?;
     let mut container = Container::new(args)?;
+    log::debug!("Container sockets: ({}, {})", container.sockets.0, container.sockets.1);
     if let Err(e) = container.create() {
         container.clean_exit().expect("Exit failure");
         log::error!("Error while creating container: {:?}", e);
