@@ -6,6 +6,7 @@ mod ipc;
 mod child;
 mod hostname;
 mod mounts;
+mod namespaces;
 
 use errors::exit_with_return_code;
 
