@@ -3,6 +3,7 @@ use crate::errors::ErrCode;
 use crate::hostname::set_container_hostname;
 use crate::mounts::set_mountpoint;
 use crate::namespaces::userns;
+use crate::capabilities::setcapabilities;
 
 use nix::sched::clone;
 use nix::sched::CloneFlags;
@@ -65,5 +66,6 @@ fn setup_container_config(config: &ContainerOpts) -> Result<(), ErrCode> {
     set_container_hostname(&config.hostname)?;
     set_mountpoint(&config.mount_dir)?;
     userns(config.fd, config.uid)?;
+    setcapabilities()?;
     Ok(())
 }

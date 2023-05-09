@@ -7,6 +7,7 @@ mod child;
 mod hostname;
 mod mounts;
 mod namespaces;
+mod capabilities;
 
 use errors::exit_with_return_code;
 
