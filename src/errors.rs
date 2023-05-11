@@ -12,6 +12,7 @@ pub enum ErrCode {
     MountError(u8),
     NamespaceError(u8),
     CapabilitiesError(u8),
+    SyscallsError(u8),
     RngError,
 }
 
