@@ -9,6 +9,7 @@ use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
 use crate::mounts::clean_mounts;
 use crate::namespaces::handle_child_uid_map;
+use crate::resources::{restrict_resources, clean_cgroups};
 
 pub const MINIMAL_KERNEL_VERSION: f32 = 4.8;
 
@@ -50,6 +51,7 @@ impl Container {
 
     pub fn create(&mut self) -> Result<(), ErrCode> {
         let pid = generate_child_process(self.config.clone())?;
+        restrict_resources(&self.config.hostname, pid)?;
         handle_child_uid_map(pid, self.sockets.0)?;
         self.child_pid = Some(pid);
         log::debug!("Creation finished");
@@ -70,6 +72,11 @@ impl Container {
         }
 
         clean_mounts(&self.config.mount_dir)?;
+
+        if let Err(e) = clean_cgroups(&self.config.hostname){
+            log::error!("Cleaning cgroups failed: {}", e);
+            return Err(e);
+        }
 
         Ok(())
     }

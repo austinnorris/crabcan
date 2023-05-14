@@ -9,6 +9,7 @@ mod mounts;
 mod namespaces;
 mod capabilities;
 mod syscalls;
+mod resources;
 
 use errors::exit_with_return_code;
 
