@@ -24,7 +24,11 @@ pub struct Args {
 
     /// Hostname of the container (optional)
     #[structopt(short, long)]
-    pub hostname: Option<String>
+    pub hostname: Option<String>,
+
+    /// Additional paths to mount inside the container
+    #[structopt(parse(from_os_str), short = "a", long = "add")]
+    pub addpaths: Vec<PathBuf>
 }
 
 pub fn parse_args() -> Result<Args, ErrCode> {

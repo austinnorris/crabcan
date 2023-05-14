@@ -5,7 +5,7 @@ use rand::Rng;
 use std::fs::remove_dir;
 use std::{fs::create_dir_all, path::PathBuf};
 
-pub fn set_mountpoint(mount_dir: &PathBuf) -> Result<(), ErrCode> {
+pub fn set_mountpoint(mount_dir: &PathBuf, addpaths: &Vec<(PathBuf, PathBuf)>) -> Result<(), ErrCode> {
     log::debug!("Setting mount point");
 
     // First we (privately) mount / within the container...
@@ -35,6 +35,17 @@ pub fn set_mountpoint(mount_dir: &PathBuf) -> Result<(), ErrCode> {
         &new_root,
         vec![MsFlags::MS_BIND, MsFlags::MS_PRIVATE],
     )?;
+
+    log::debug!("Mounting additional paths...");
+    for (inpath, mountpath) in addpaths.iter() {
+        let outpath = new_root.join(mountpath);
+        create_directory(&outpath)?;
+        mount_directory(
+            Some(inpath),
+            &outpath,
+            vec![MsFlags::MS_PRIVATE, MsFlags::MS_BIND, MsFlags::MS_RDONLY]
+        )?;
+    }
 
     // ...finally we will do a root pivot
     // See: https://man7.org/linux/man-pages/man2/pivot_root.2.html
@@ -67,6 +78,7 @@ pub fn set_mountpoint(mount_dir: &PathBuf) -> Result<(), ErrCode> {
 }
 
 pub fn clean_mounts(_root: &PathBuf) -> Result<(), ErrCode> {
+    // unmount_path(_root)?;
     Ok(())
 }
 
@@ -79,6 +91,11 @@ pub fn mount_directory(
 
     for f in flags.iter() {
         ms_flags.insert(*f);
+    }
+
+    match path {
+        Some(p) => log::debug!("Mount {:?} -> {:?}", p, mount_point),
+        None => ()
     }
 
     match mount::<PathBuf, PathBuf, PathBuf, PathBuf>(path, mount_point, None, ms_flags, None) {

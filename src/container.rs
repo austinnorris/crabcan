@@ -1,4 +1,5 @@
 use std::os::unix::io::RawFd;
+use std::path::PathBuf;
 
 use nix::sys::wait::waitpid;
 use nix::unistd::{close, Pid};
@@ -9,7 +10,7 @@ use crate::config::ContainerOpts;
 use crate::errors::ErrCode;
 use crate::mounts::clean_mounts;
 use crate::namespaces::handle_child_uid_map;
-use crate::resources::{restrict_resources, clean_cgroups};
+use crate::resources::{clean_cgroups, restrict_resources};
 
 pub const MINIMAL_KERNEL_VERSION: f32 = 4.8;
 
@@ -40,8 +41,27 @@ pub struct Container {
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, ErrCode> {
-        let (config, sockets) =
-            ContainerOpts::new(&args.command, args.uid, args.mount_dir, args.hostname)?;
+        let mut addpaths = vec![];
+        for ap_pair in args.addpaths.iter() {
+            let mut pair = ap_pair.to_str().unwrap().split(":");
+            let frompath = PathBuf::from(pair.next().unwrap())
+                .canonicalize()
+                .expect("Cannot canonicalize path")
+                .to_path_buf();
+            let mountpath = PathBuf::from(pair.next().unwrap())
+                .strip_prefix("/")
+                .expect("Cannot strip prefix from path")
+                .to_path_buf();
+            addpaths.push((frompath, mountpath))
+        }
+
+        let (config, sockets) = ContainerOpts::new(
+            &args.command,
+            args.uid,
+            args.mount_dir,
+            args.hostname,
+            addpaths,
+        )?;
         Ok(Container {
             sockets,
             config,
@@ -73,7 +93,7 @@ impl Container {
 
         clean_mounts(&self.config.mount_dir)?;
 
-        if let Err(e) = clean_cgroups(&self.config.hostname){
+        if let Err(e) = clean_cgroups(&self.config.hostname) {
             log::error!("Cleaning cgroups failed: {}", e);
             return Err(e);
         }
@@ -96,7 +116,11 @@ pub fn wait_child(pid: Option<Pid>) -> Result<(), ErrCode> {
 pub fn start(args: Args) -> Result<(), ErrCode> {
     check_linux_version()?;
     let mut container = Container::new(args)?;
-    log::debug!("Container sockets: ({}, {})", container.sockets.0, container.sockets.1);
+    log::debug!(
+        "Container sockets: ({}, {})",
+        container.sockets.0,
+        container.sockets.1
+    );
     if let Err(e) = container.create() {
         container.clean_exit().expect("Exit failure");
         log::error!("Error while creating container: {:?}", e);
