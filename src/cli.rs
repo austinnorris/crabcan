@@ -30,6 +30,10 @@ pub struct Args {
 pub fn parse_args() -> Result<Args, ErrCode> {
     let args = Args::from_args();
 
+    if args.command.is_empty() {
+        return Err(ErrCode::InvalidArgument("command"));
+    }
+
     Ok(args)
 }
 

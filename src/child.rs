@@ -6,10 +6,11 @@ use crate::namespaces::userns;
 use crate::capabilities::setcapabilities;
 use crate::syscalls::setsyscalls;
 
+use std::ffi::CString;
 use nix::sched::clone;
 use nix::sched::CloneFlags;
 use nix::sys::signal::Signal;
-use nix::unistd::{Pid, close};
+use nix::unistd::{Pid, close, execve};
 
 const STACK_SIZE: usize = 1024 * 1024;
 
@@ -35,7 +36,17 @@ fn child(config: ContainerOpts) -> isize {
             .expect("Could not convert path to string"),
         config.argv
     );
-    0
+
+    let retcode = match execve::<CString, CString>(&config.path, &config.argv, &[]) {
+        Ok(_) => 0,
+        Err(e) => {
+            log::error!("Error while performing execve: {:?}", e);
+            -1
+        }
+    };
+
+    retcode
+
 }
 
 pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, ErrCode> {
